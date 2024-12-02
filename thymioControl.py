@@ -42,7 +42,7 @@ class ThymioControl:
         self.__proportionalGain = 0.3
 
         # constant derivative parameter for transforming angle into rotational speed
-        self.__derivativeGain = 0.3
+        self.__derivativeGain = 0.6
 
         # adjustment for the thymio's wheels differences
         self.__wheelsAdjustment = 1.07
@@ -205,6 +205,18 @@ class ThymioControl:
         print("THYMIO CONTROL: pos: ", self.__pos)
         print("THYMIO CONTROL: distance: ", distance)
 
+        # check if robot has overshot the waypoint
+        if self.__path[self.__step] != self.__path[-1]:
+            dist_next = math.sqrt((self.__path[self.__step + 1][0] - self.__pos[0])**2 + (self.__path[self.__step + 1][1] - self.__pos[1])**2)
+            dist_obj = math.sqrt((self.__path[self.__step + 1][0] - self.__path[self.__step][0])**2 + (self.__path[self.__step + 1][1] - self.__path[self.__step][1])**2)
+            if dist_next < dist_obj:
+                self.__step += 1
+                print("THYMIO CONTROL: overshot objective, going to next: ", self.__step)
+                objective = self.__path[self.__step]
+                row_diff = objective[0] - self.__pos[0]
+                col_diff = objective[1] - self.__pos[1]
+                distance = math.sqrt(row_diff**2 + col_diff**2)
+
         while distance < self.__reachedThreshold:
             if self.__step == len(self.__path) - 1:
                 print("THYMIO CONTROL: Destination reached")
@@ -231,18 +243,12 @@ class ThymioControl:
 
         if angleDistance > self.__angleThreshold or angleDistance < -self.__angleThreshold:
             # if the angle is not the desired one, rotate in place
-            if self.__timeStep != 0:
-                w = angleDistance * self.__proportionalGain + self.__derivativeGain * (angleDistance - self.__prevAngleError) / self.__timeStep
-            else:
-                w = 0
+            w = angleDistance * self.__proportionalGain + self.__derivativeGain * (angleDistance - self.__prevAngleError) / self.__timeStep
             v = 0
         else:
             # if the angle is the desired one, move straight
             w = 0
-            if self.__timeStep != 0:
-                v = self.__linearSpeed
-            else:
-                v = 0
+            v = self.__linearSpeed
         
         print("THYMIO CONTROL: v: ", v)
         print("THYMIO CONTROL: w: ", w)
@@ -255,7 +261,6 @@ class ThymioControl:
     
     # differential drive model, using Thymio's geometry
     def differentialDrive(self, v, w):
-        
         # notice the inverted sign, because the map has the y axis inverted
         vr = (v - w * self.__lenght / 2)
         vl = (v + w * self.__lenght / 2)

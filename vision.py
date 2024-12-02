@@ -6,7 +6,7 @@ from colorama import Fore, Style
 
 
 class Vision:
-    def __init__(self, target_height=10, fps=10, threshold=128, tag_size_mm=36, default_image_path=None):
+    def __init__(self, target_height=10, fps=10, threshold=128, tag_size_mm=37, default_image_path=None):
         """
         Initialize the Vision class with camera settings and a default image.
 
