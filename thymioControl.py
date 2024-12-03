@@ -155,16 +155,31 @@ class ThymioControl:
         objective = self.__path[self.__step]
 
         # calculate the distance between the robot and the objective
-        x_diff = objective[0] - self.__pos[0]
-        y_diff = objective[1] - self.__pos[1]
-        distance = math.sqrt(x_diff**2 + y_diff**2)
+        row_diff = objective[0] - self.__pos[0]
+        col_diff = objective[1] - self.__pos[1]
+        distance = math.sqrt(row_diff**2 + col_diff**2)
         print("THYMIO CONTROL: objective: ", objective)
         print("THYMIO CONTROL: pos: ", self.__pos)
         print("THYMIO CONTROL: distance: ", distance)
 
+        # check if robot has overshot the waypoint
+        if self.__path[self.__step] != self.__path[-1]:
+            dist_next = math.sqrt((self.__path[self.__step + 1][0] - self.__pos[0])**2 + (self.__path[self.__step + 1][1] - self.__pos[1])**2)
+            dist_obj = math.sqrt((self.__path[self.__step + 1][0] - self.__path[self.__step][0])**2 + (self.__path[self.__step + 1][1] - self.__path[self.__step][1])**2)
+            if dist_next < dist_obj:
+                self.__step += 1
+                print("THYMIO CONTROL: overshot objective, going to next: ", self.__step)
+                objective = self.__path[self.__step]
+                row_diff = objective[0] - self.__pos[0]
+                col_diff = objective[1] - self.__pos[1]
+                distance = math.sqrt(row_diff**2 + col_diff**2)
+
         # calculate the angle between the robot and the objective
         # normalize the angle between -pi and pi
-        angleDistance = (math.atan2(y_diff, x_diff) - self.__angle + math.pi) % (2 * math.pi) - math.pi
+        angleDistance = (math.atan2(row_diff, col_diff) - self.__angle + math.pi) % (2 * math.pi) - math.pi
+        print("THYMIO CONTROL: waypoint angle: ", math.atan2(row_diff, col_diff))
+        print("THYMIO CONTROL: angle: ", self.__angle)
+        print("THYMIO CONTROL: angleDistance: ", angleDistance)
 
         # move the robot and if the cell is reached, delete it and restart with the following
         if distance < self.__reachedThreshold:
@@ -209,7 +224,7 @@ class ThymioControl:
         if self.__path[self.__step] != self.__path[-1]:
             dist_next = math.sqrt((self.__path[self.__step + 1][0] - self.__pos[0])**2 + (self.__path[self.__step + 1][1] - self.__pos[1])**2)
             dist_obj = math.sqrt((self.__path[self.__step + 1][0] - self.__path[self.__step][0])**2 + (self.__path[self.__step + 1][1] - self.__path[self.__step][1])**2)
-            if dist_next < dist_obj:
+            if dist_next <= dist_obj:
                 self.__step += 1
                 print("THYMIO CONTROL: overshot objective, going to next: ", self.__step)
                 objective = self.__path[self.__step]
