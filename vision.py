@@ -69,15 +69,11 @@ class Vision:
         detector = Detector(families="tagStandard41h12")
         results = detector.detect(gray)
 
-        # Debug: Affichez tous les IDs détectés
-        print(f"VISION: tag IDs: {[result.tag_id for result in results]}")
-
         # Check if at least 4 tags are detected
         if len(results) < 4:
             print(f"VISION: warning: Only {len(results)} tags detected. Cannot crop the image.")
             self.croped_image = self.image
             return True
-        print(f"VISION: detected {len(results)} tags.")
 
         # Map tags to corners (top-left, top-right, bottom-left, bottom-right)
         tag_positions = self._parse_tag_positions(results)
@@ -240,7 +236,6 @@ class Vision:
             cx = int(moments["m10"] / moments["m00"])  # x-coordinate (horizontal position)
             cy = int(moments["m01"] / moments["m00"])  # y-coordinate (vertical position)
             self.goal = (cy, cx)  # Store as (row, column) for consistency
-            print("VISION: goal detected")
         else:
             self.goal = None
             print("VISION: red region detected, but could not calculate center.")
@@ -300,8 +295,6 @@ class Vision:
         ptB = tag.corners[1]  # Corner B (next to A)
         dx, dy = ptB[0] - ptA[0], ptB[1] - ptA[1]
         self.angle = (np.arctan2(dy, dx) - np.pi/2 ) % (2 * np.pi)  # Angle in radians (0 to 2*pi)
-
-        print(f"VISION: start detected")
 
         # Replace the pixels corresponding to the tag with white in the cropped image
         white_color = (255, 255, 255)
@@ -392,7 +385,6 @@ class Vision:
                 f"{Fore.WHITE}{x:3} "
                 for x in row
             ) + "\n"
-        print("VISION: ", result + Style.RESET_ALL)
         # Convert the binary matrix to an image
         binary_map = np.where(self.matrix == -1, 0, 255).astype(np.uint8)
         cv2.imshow("Binary Matrix", binary_map)
@@ -401,17 +393,11 @@ class Vision:
         self.display_image()
         #self.display_matrix()
         #print(f"VISION: matrix shape: {self.matrix.shape}")
-        if self.start is not None and self.angle is not None:
-            print(f"VISION: start: {self.start}, angle: {self.angle:.2f} rad")
-        else:
+        if self.start is None or self.angle is None:
             print("VISION: start not detected.")
 
-        if self.goal is not None:
-            print(f"VISION: goal: {self.goal}")
-        else:
+        if self.goal is None:
             print("VISION: goal not detected.")
-        if self.pixel_to_mm_scale is not None:
-            print(f"VISION: pixel-to-mm scale: {self.pixel_to_mm_scale:.2f} cells/cm")
 
 
     def release(self):
